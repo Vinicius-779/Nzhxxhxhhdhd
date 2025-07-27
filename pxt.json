@@ -1,0 +1,14 @@
+{
+  "name": "L298N",
+  "version": "0.0.1",
+  "description": "Extensão para controle do driver L298N (placa vermelha)",
+  "dependencies": {},
+  "files": [
+    "main.ts",
+    "README.md"
+  ],
+  "targetVersions": {
+    "microbit": "0.14.6",
+    "codal-microbit": "2.2.0"
+  }
+}
