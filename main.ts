@@ -1,95 +1,96 @@
-enum Motor {
-    //% block="Motor A"
+// Enumeração para seleção de motor
+enum SelecionarMotor {
+    //% block="A (IN1/IN2)"
     A,
-    //% block="Motor B"
+    //% block="B (IN3/IN4)"
     B,
     //% block="Ambos"
     Ambos
 }
 
-enum Sentido {
+// Enumeração para direção
+enum Direcao {
     //% block="Esquerda"
     Esquerda,
     //% block="Direita"
     Direita
 }
 
-//% color=#FF0000 icon="⚙️" block="L298N" weight=100
+//% color=#FF0000 weight=100 icon="\uf085" block="L298N"
 namespace L298N {
     let velocidade = 800
-    let tempo360 = 800 // tempo em ms para girar 360°
+    let tempoGiroCompleto = 800 // Tempo estimado para giro de 360°
 
+    // Pinos fixos
     const IN1 = DigitalPin.P13
     const IN2 = DigitalPin.P14
     const IN3 = DigitalPin.P15
     const IN4 = DigitalPin.P16
 
-    //% block="definir velocidade padrão para %v"
+    //% block="definir velocidade padrão %v"
     //% v.min=0 v.max=1023
     export function definirVelocidade(v: number): void {
         velocidade = Math.clamp(0, 1023, v)
     }
 
-    //% block="calibrar tempo para girar 360° para %tempo ms"
-    //% tempo.min=100 tempo.max=5000
-    export function calibrarTempoGiro360(tempo: number): void {
-        tempo360 = tempo
+    //% block="definir tempo para giro 360° %ms ms"
+    //% ms.min=100 ms.max=5000
+    export function calibrarGiro360(ms: number): void {
+        tempoGiroCompleto = ms
     }
 
-    function ativarMotor(motor: Motor, pin1: number, pin2: number): void {
-        pin1 = Math.clamp(0, 1023, pin1)
-        pin2 = Math.clamp(0, 1023, pin2)
-        switch (motor) {
-            case Motor.A:
-                pins.analogWritePin(IN1, pin1)
-                pins.analogWritePin(IN2, pin2)
-                break
-            case Motor.B:
-                pins.analogWritePin(IN3, pin1)
-                pins.analogWritePin(IN4, pin2)
-                break
-            case Motor.Ambos:
-                pins.analogWritePin(IN1, pin1)
-                pins.analogWritePin(IN2, pin2)
-                pins.analogWritePin(IN3, pin1)
-                pins.analogWritePin(IN4, pin2)
-                break
+    function ativarMotores(motor: SelecionarMotor, v1: number, v2: number): void {
+        if (motor == SelecionarMotor.A || motor == SelecionarMotor.Ambos) {
+            pins.analogWritePin(IN1, v1)
+            pins.analogWritePin(IN2, v2)
+        }
+        if (motor == SelecionarMotor.B || motor == SelecionarMotor.Ambos) {
+            pins.analogWritePin(IN3, v1)
+            pins.analogWritePin(IN4, v2)
         }
     }
 
     //% block="motor %motor para frente"
-    export function frente(motor: Motor): void {
-        ativarMotor(motor, velocidade, 0)
+    export function frente(motor: SelecionarMotor): void {
+        ativarMotores(motor, velocidade, 0)
     }
 
     //% block="motor %motor para trás"
-    export function re(motor: Motor): void {
-        ativarMotor(motor, 0, velocidade)
+    export function re(motor: SelecionarMotor): void {
+        ativarMotores(motor, 0, velocidade)
     }
 
     //% block="parar motor %motor"
-    export function parar(motor: Motor): void {
-        ativarMotor(motor, 0, 0)
+    export function parar(motor: SelecionarMotor): void {
+        ativarMotores(motor, 0, 0)
     }
 
-    //% block="virar para %lado"
-    export function virar(lado: Sentido): void {
-        if (lado == Sentido.Esquerda) {
-            ativarMotor(Motor.A, 0, velocidade)
-            ativarMotor(Motor.B, velocidade, 0)
+    //% block="virar para %direcao usando %motor"
+    export function virar(direcao: Direcao, motor: SelecionarMotor): void {
+        if (direcao == Direcao.Esquerda) {
+            if (motor == SelecionarMotor.Ambos) {
+                ativarMotores(SelecionarMotor.A, 0, velocidade)
+                ativarMotores(SelecionarMotor.B, velocidade, 0)
+            } else {
+                ativarMotores(motor, 0, velocidade)
+            }
         } else {
-            ativarMotor(Motor.A, velocidade, 0)
-            ativarMotor(Motor.B, 0, velocidade)
+            if (motor == SelecionarMotor.Ambos) {
+                ativarMotores(SelecionarMotor.A, velocidade, 0)
+                ativarMotores(SelecionarMotor.B, 0, velocidade)
+            } else {
+                ativarMotores(motor, velocidade, 0)
+            }
         }
-        basic.pause(tempo360 / 4)
-        parar(Motor.Ambos)
+        basic.pause(tempoGiroCompleto / 4)
+        parar(motor)
     }
 
-    //% block="girar %graus ° para %lado"
-    export function girarGraus(graus: number, lado: Sentido): void {
-        const tempo = (graus / 360) * tempo360
-        virar(lado)
+    //% block="girar %graus ° para %direcao usando %motor"
+    export function girarGraus(graus: number, direcao: Direcao, motor: SelecionarMotor): void {
+        const tempo = (graus / 360) * tempoGiroCompleto
+        virar(direcao, motor)
         basic.pause(tempo)
-        parar(Motor.Ambos)
+        parar(motor)
     }
 }
